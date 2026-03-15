@@ -1,0 +1,103 @@
+{
+  "projectType": "saas",
+  "projectName": "ACM at CSUF",
+  "projectDescription": "The official SvelteKit-powered website for ACM at California State University, Fullerton, featuring events, blog posts, team pages, hackathons, and community tools.",
+  "theme": "almond",
+  "primaryColor": "#08a2f8",
+  "lightColor": "#64bfe7",
+  "darkColor": "#040404",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started/quickstart", "getting-started/local-setup"]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/events",
+              "features/blog",
+              "features/teams",
+              "features/hackathons",
+              "features/lc-dailies",
+              "features/shorter-links",
+              "features/branding"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Contributing",
+        "groups": [
+          {
+            "group": "Contribution Guide",
+            "pages": [
+              "contributing/overview",
+              "contributing/pull-requests",
+              "contributing/environment-setup"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/routes",
+              "architecture/components",
+              "architecture/server-lib"
+            ]
+          },
+          {
+            "group": "Data Management",
+            "pages": [
+              "data/board-members",
+              "data/short-links",
+              "data/blog-posts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/cloudflare-workers",
+              "deployment/environment-variables",
+              "deployment/ci-cd"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Events calendar powered by Google Calendar API",
+    "Blog powered by GitHub Discussions",
+    "Team/board member directory with officer profiles",
+    "Hackathon showcase pages",
+    "LeetCode Dailies (lc-dailies) integration",
+    "URL shortlink system (shorter)",
+    "Boardify Discord slash command for board member updates",
+    "ACM Paths learning roadmap",
+    "Design gallery and branding assets",
+    "Deployed on Cloudflare Workers with wrangler"
+  ],
+  "publicApiSurface": [
+    "GET /events - Events listing page",
+    "GET /blog - Blog listing page",
+    "GET /teams - Board member directory",
+    "GET /hackathons - Hackathon showcase",
+    "GET /lc-dailies - LeetCode Dailies leaderboard",
+    "GET /shorter - URL shortlink redirector",
+    "GET /branding - ACM branding assets page",
+    "GET /boardify - Board member self-update tool",
+    "GET /paths - ACM learning paths",
+    "GET /feed.xml - RSS feed",
+    "GET /sitemap - Site map",
+    "GET /[...id=link].svg - Dynamic SVG shortlink badges"
+  ]
+}
