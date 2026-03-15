@@ -1,0 +1,74 @@
+---
+title: "LC-Dailies"
+description: "A weekly LeetCode competition run through the ACM at CSUF Discord server, with a public scoreboard."
+---
+
+LC-Dailies is a recurring competition run in the ACM at CSUF Discord server (join via `acmcsuf.com/discord`). Members solve the daily LeetCode problem each day; their scores are tracked, ranked, and displayed publicly at `acmcsuf.com/lc-dailies`.
+
+## How it works
+
+- Participants solve the daily LeetCode challenge.
+- Players are ranked based on **number of problems solved** and **time taken**.
+- Scores reset on a **weekly basis** — each week is a "season."
+- The leaderboard for each season is viewable on the site.
+
+## Viewing scores
+
+<Steps>
+  <Step title="Go to the LC-Dailies page">
+    Navigate to `acmcsuf.com/lc-dailies`.
+  </Step>
+  <Step title="Browse seasons">
+    The page lists all past seasons with their start dates. Seasons are identified by a numeric ID.
+  </Step>
+  <Step title="View a season's leaderboard">
+    Click a season link to open its detailed leaderboard at `/lc-dailies/{season_id}`.
+  </Step>
+</Steps>
+
+## Participating
+
+Usage instructions are available in the handbook:
+
+```
+acmcsuf.com/lc-dailies-handbook
+```
+
+The competition runs in the ACM at CSUF Discord server. Join via `acmcsuf.com/discord`.
+
+## Data source
+
+Season data is fetched from the LC-Dailies API hosted at `https://lc-dailies.deno.dev`. The site uses `LCDailiesAPIClient` from `src/lib/public/lc-dailies/lc-dailies-api-client.ts` to communicate with the API.
+
+```typescript
+const DEFAULT_API_URL = 'https://lc-dailies.deno.dev';
+
+export class LCDailiesAPIClient {
+  public async listSeasons(): Promise<Season[]> { ... }
+  public async getSeason(seasonID: string): Promise<Season | null> { ... }
+  public async getLatestSeason(): Promise<Season | null> { ... }
+  public async getSeasonText(seasonID: string): Promise<string | null> { ... }
+}
+```
+
+### API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/seasons` | List all seasons |
+| `GET` | `/seasons/{id}` | Get a specific season |
+| `GET` | `/seasons/latest` | Get the most recent season |
+| `GET` | `/seasons/{id}.txt` | Plain text leaderboard for a season |
+
+## URL structure
+
+| URL | Description |
+|-----|-------------|
+| `/lc-dailies` | Index of all seasons |
+| `/lc-dailies/{season_id}` | Leaderboard for a specific season |
+| `/lc-dailies-handbook` | Shortlink to the participation handbook |
+| `/lc-dailies-prod` | Shortlink to `https://lc-dailies.deno.dev` |
+
+<Note>
+The LC-Dailies competition and API are maintained as a separate open source project. The acmcsuf.com site only consumes the API — it does not manage the competition logic.
+</Note>

@@ -1,0 +1,74 @@
+---
+title: "Shorter Links"
+description: "A URL shortener that maps memorable paths on acmcsuf.com to external destinations."
+---
+
+Shorter Links lets ACM at CSUF use short, memorable URLs on `acmcsuf.com` that redirect to longer external destinations. For example, `acmcsuf.com/discord` redirects to the ACM Discord invite link.
+
+The full index of active shortlinks is visible at `acmcsuf.com/shorter`.
+
+## How to use a shortlink
+
+Just navigate to `acmcsuf.com/{shortname}`. For example:
+
+| Short URL | Destination |
+|-----------|-------------|
+| `acmcsuf.com/discord` | ACM Discord invite |
+| `acmcsuf.com/github` | ACM GitHub organization |
+| `acmcsuf.com/instagram` | ACM Instagram profile |
+| `acmcsuf.com/youtube` | ACM YouTube channel |
+| `acmcsuf.com/linkedin` | ACM LinkedIn page |
+| `acmcsuf.com/calendar` | ACM Google Calendar |
+| `acmcsuf.com/lc-dailies-handbook` | LC-Dailies participation handbook |
+| `acmcsuf.com/shorter-handbook` | Shorter Links handbook |
+| `acmcsuf.com/contributing` | CONTRIBUTING.md on GitHub |
+
+## Viewing all shortlinks
+
+All shortlinks and their destinations are listed at `acmcsuf.com/shorter`. The page renders directly from the `links.json` data file — every entry in the file appears on the page.
+
+## Adding or updating a shortlink (contributors)
+
+Shortlinks are stored in `src/lib/public/links/links.json` as a flat JSON object mapping a path name to its destination URL.
+
+```json
+{
+  "discord": "https://discord.gg/jXpUE6bS4s",
+  "github": "https://github.com/acmcsufoss",
+  "youtube": "https://www.youtube.com/channel/UCDMBj0o4V8Cpt0jgsZLNVVg",
+  "instagram": "https://instagram.com/acmcsuf",
+  "linkedin": "https://linkedin.com/company/acm-at-csuf/"
+}
+```
+
+<Tabs>
+  <Tab title="Edit the JSON file">
+    Open `src/lib/public/links/links.json` and add or modify a key-value pair:
+
+    ```json
+    {
+      "my-shortlink": "https://example.com/destination"
+    }
+    ```
+
+    The key becomes the URL path (e.g., `acmcsuf.com/my-shortlink`) and the value is the redirect target.
+  </Tab>
+  <Tab title="Use the Discord slash command">
+    Board members can manage shortlinks using the `/shorter` slash command in the official ACM at CSUF Discord server. See `acmcsuf.com/shorter-handbook` for full instructions.
+  </Tab>
+</Tabs>
+
+<Warning>
+Shortlink paths are global — they apply to the root of `acmcsuf.com`. Avoid names that conflict with existing site routes like `/events`, `/blog`, `/teams`, or `/hackathons`.
+</Warning>
+
+## Technical details
+
+Shortlink destinations may be:
+
+- **Absolute URLs** (e.g., `https://github.com/acmcsufoss`) — redirect to an external site
+- **Relative paths** (e.g., `/code/issues`) — redirect to another page on acmcsuf.com
+
+The `LINKS` object is imported from `$lib/public/links` and used directly in the Svelte page template to render the index at `/shorter`.
+
+The source code for the underlying shorter service is at `acmcsuf.com/code` under the `acmcsufoss/shorter` repository.

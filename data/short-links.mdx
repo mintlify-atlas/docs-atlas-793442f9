@@ -1,0 +1,103 @@
+---
+title: "Short Links"
+description: "How URL shortlinks are managed in acmcsuf.com, including the links.json data file, the redirect system, and the /shorter Discord command."
+---
+
+Shortlinks let you share memorable URLs like `acmcsuf.com/discord` that redirect to longer destinations. They are stored in a single JSON file and served by a SvelteKit hook that intercepts every incoming request.
+
+## Data location
+
+All shortlinks live in:
+
+```
+src/lib/public/links/links.json
+```
+
+The file is a flat JSON object mapping a short path key to its destination URL.
+
+```json
+{
+  "discord": "https://discord.gg/jXpUE6bS4s",
+  "github": "https://github.com/acmcsufoss",
+  "blog/new": "/code/discussions/new?category=Newsletter",
+  "issues": "/code/issues"
+}
+```
+
+<Info>
+Destination values that start with `https://` redirect to external sites. Values that start with `/` are relative to `acmcsuf.com` and support chained resolution — the resolver will follow internal links recursively (up to 256 hops).
+</Info>
+
+## How the redirector works
+
+The shortlink system is implemented as a SvelteKit `handle` hook in `src/lib/server/links/shortener.ts`. It intercepts every request before it reaches a route:
+
+1. The hook resolves the request URL against the `LINKS` map.
+2. If the resolved destination differs from the original URL, it issues an HTTP `302` redirect.
+3. If the pathname ends with `.svg`, the request is passed through to the [SVG badge endpoint](#svg-qr-code-badges) instead.
+
+The core resolution logic in `src/lib/server/links/resolve.ts` strips hashes and query parameters, walks up the path to find the longest matching key, and appends any leftover path segments to the destination.
+
+## Adding or updating a shortlink
+
+<Tabs>
+  <Tab title="Manual edit">
+    <Steps>
+      <Step title="Open the links file">
+        Open `src/lib/public/links/links.json` in your editor.
+      </Step>
+      <Step title="Add or update an entry">
+        Add a new key-value pair, or change an existing destination:
+
+        ```json
+        {
+          "my-new-link": "https://example.com/some/long/url"
+        }
+        ```
+
+        Keys may contain slashes (e.g. `"gfi/front"`), which creates path-based shortlinks like `acmcsuf.com/gfi/front`.
+      </Step>
+      <Step title="Run checks and open a PR">
+        ```bash
+        npm run all
+        ```
+        Then open a pull request against the `main` branch.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Discord slash command">
+    Board members can add or update shortlinks without touching the repository.
+
+    <Steps>
+      <Step title="Open the ACM at CSUF Discord server">
+        Join the official club Discord server.
+      </Step>
+      <Step title="Run the /shorter command">
+        Use the `/shorter` slash command and provide the short path and destination URL when prompted.
+      </Step>
+      <Step title="Bot opens a pull request">
+        The bot submits a pull request on your behalf. A maintainer will review and merge it.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For the full handbook on the `/shorter` command, visit [acmcsuf.com/shorter-handbook](https://acmcsuf.com/shorter-handbook).
+    </Tip>
+  </Tab>
+</Tabs>
+
+## SVG QR code badges
+
+Every shortlink also has an automatically generated SVG QR code available by appending `.svg` to the URL.
+
+For example:
+
+```
+https://acmcsuf.com/discord.svg
+```
+
+This is handled by the route at `src/routes/(site)/[...id=link].svg/+server.ts`. The server resolves the shortlink (stripping the `.svg` suffix), generates a QR code SVG for the destination, and returns it with `Content-Type: image/svg+xml`.
+
+## Shortlink listing page
+
+All current shortlinks and their destinations are listed at [acmcsuf.com/shorter](https://acmcsuf.com/shorter). The page is rendered server-side from the same `LINKS` map.

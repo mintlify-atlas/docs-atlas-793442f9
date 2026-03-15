@@ -1,0 +1,131 @@
+---
+title: "Teams"
+description: "Explore ACM at CSUF's specialized teams and browse officer profiles by semester."
+---
+
+The Teams page at `acmcsuf.com/teams` lists all ACM at CSUF teams and their current officers. Each team specializes in a specific area of the tech industry, providing students with a focused environment to explore new fields and develop skills.
+
+## The teams
+
+<CardGroup cols={2}>
+  <Card title="General" icon="users">
+    Manages club operations, organizes events, and ensures the smooth functioning of ACM. The backbone of the community.
+  </Card>
+  <Card title="AI" icon="cpu">
+    Provides accessible information about artificial intelligence and machine learning. Focuses on beginner-friendly projects.
+  </Card>
+  <Card title="Algo" icon="code">
+    Builds programming fundamentals through data structures, algorithms, problem-solving, and competitive programming.
+  </Card>
+  <Card title="Design" icon="pen-tool">
+    Emphasizes product design and product management, covering design principles, tools, and the full product lifecycle.
+  </Card>
+  <Card title="Dev" icon="terminal">
+    Gives students hands-on experience with software development projects and various industry tech stacks.
+  </Card>
+  <Card title="Game Dev" icon="gamepad-2">
+    Teaches game programming fundamentals, design principles, and the development process of a gaming project.
+  </Card>
+  <Card title="ICPC" icon="trophy">
+    Prepares students for the Intercollegiate Competitive Programming Competition through weekly practice sessions and mock contests.
+  </Card>
+  <Card title="Marketing" icon="megaphone">
+    Advertises and spreads awareness of ACM events using digital strategies and creative storytelling.
+  </Card>
+  <Card title="Node Buds" icon="heart">
+    A big-little mentorship program pairing students with experienced club officers for social events, workshops, and guidance.
+  </Card>
+  <Card title="Open Source" icon="github">
+    Contributes to ACM open source projects and fosters collaboration in the tech community.
+  </Card>
+  <Card title="Special Events" icon="star">
+    Plans and executes memorable events that bring the community together.
+  </Card>
+</CardGroup>
+
+## How to use the page
+
+<Steps>
+  <Step title="Navigate to the teams page">
+    Go to `acmcsuf.com/teams`.
+  </Step>
+  <Step title="Select a semester">
+    Use the semester dropdown to switch between terms (e.g., Spring 2026, Fall 2025). Terms are displayed in the format `Fall YYYY` or `Spring YYYY`.
+  </Step>
+  <Step title="Jump to a team">
+    Click a team icon at the top of the page to scroll directly to that team's section.
+  </Step>
+  <Step title="View officer profiles">
+    Each team section lists its officers with their profile picture, position title, and Discord username.
+  </Step>
+  <Step title="Contact an officer">
+    Reach out to any board member via their Discord username shown below their profile.
+  </Step>
+</Steps>
+
+## Available semesters
+
+The semester selector covers terms from Spring 2021 through Spring 2026 (`S21` – `S26`). New terms are added to `src/lib/public/board/data/terms.ts` as they become active.
+
+## Updating officer data (contributors)
+
+Officer data is stored in `src/lib/public/board/data/officers.json`.
+
+<Tabs>
+  <Tab title="Edit the JSON file">
+    Directly edit `src/lib/public/board/data/officers.json`. Each officer entry uses the `Officer` interface:
+
+    ```typescript
+    export interface Officer {
+      fullName: string;
+      picture?: string;
+      positions: {
+        [key in Term]?: Position[];
+      };
+      discord?: string;
+      displayName?: string;
+    }
+    ```
+
+    Positions are keyed by term code (e.g., `"S26"`, `"F25"`) and reference a tier ID that determines display order.
+  </Tab>
+  <Tab title="Use the Discord slash command">
+    Board members can update their own profiles using the `/boardd` slash command in the official ACM at CSUF Discord server. See `acmcsuf.com/boardify` for details.
+  </Tab>
+</Tabs>
+
+## Team data shape
+
+Teams are defined in `src/lib/public/board/data/teams.json`. Each team entry uses the `Team` interface:
+
+```typescript
+export interface Team {
+  id: string;
+  title: string;
+  description?: string;
+  color: string;
+  logoSrc: string;
+  oldLogoSrc?: string;
+  tiers?: number[];
+}
+```
+
+The `tiers` array maps to tier IDs in `tiers.json`, which determine which officer positions belong to each team.
+
+## Term codes
+
+Terms use a two-character format: a letter (`S` for Spring, `F` for Fall) followed by the two-digit year.
+
+| Code | Semester |
+|------|----------|
+| `S21` | Spring 2021 |
+| `F21` | Fall 2021 |
+| `S22` | Spring 2022 |
+| `F22` | Fall 2022 |
+| `S23` | Spring 2023 |
+| `F23` | Fall 2023 |
+| `S24` | Spring 2024 |
+| `F24` | Fall 2024 |
+| `S25` | Spring 2025 |
+| `F25` | Fall 2025 |
+| `S26` | Spring 2026 |

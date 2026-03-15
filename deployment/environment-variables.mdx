@@ -1,0 +1,113 @@
+---
+title: "Environment Variables"
+description: "All environment variables used by acmcsuf.com, how to configure them, and security guidelines."
+---
+
+## Overview
+
+acmcsuf.com uses environment variables for API keys, feature flags, and service credentials. Variables are stored in `.env` files that are never committed to the repository.
+
+## Setting Up Your Environment
+
+<Steps>
+  <Step title="Copy the example file">
+    ```bash
+    cp .env.example .env
+    ```
+
+    The `.env.example` file contains all recognized variables with safe placeholder values.
+  </Step>
+
+  <Step title="Fill in required values">
+    Open `.env` and replace placeholders with real credentials for the features you need locally. At minimum, `GH_ACCESS_TOKEN` is required for GitHub API calls.
+  </Step>
+
+  <Step title="Create .env.production for manual deploys">
+    If you are performing a manual production deployment, create a separate `.env.production` file with production-grade values. This file is loaded when running `npm run deploy` or `npm run preview:live`.
+
+    ```bash
+    cp .env .env.production
+    # Edit .env.production with production credentials
+    ```
+  </Step>
+</Steps>
+
+## Environment Files
+
+| File | Purpose |
+|---|---|
+| `.env.example` | Template committed to the repo — safe placeholder values only |
+| `.env` | Local development — never commit |
+| `.env.production` | Production values used by `npm run deploy` — never commit |
+
+## Variable Reference
+
+### Feature Flags
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `DEBUG_FLAG_ENABLED` | Optional | `1` (dev), `0` (prod) | Enables debug features across the site. Must be `0` in production. |
+
+### GitHub
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `GH_ACCESS_TOKEN` | Required | `💖` (example) | GitHub Personal Access Token used for GitHub API calls, including fetching blog posts from GitHub Discussions. |
+| `GH_DISCUSSION_CATEGORY_ID` | Optional | `DIC_kwDOE7ysSc4CAC0o` | The GraphQL node ID of the GitHub Discussions category used as the blog source. |
+
+### Google APIs
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `GCAL_API_KEY` | Optional | *(empty)* | Google Calendar API key for fetching calendar events. |
+| `GCAL_ID` | Optional | *(empty)* | Google Calendar ID to read events from. |
+| `GDRIVE_GALLERY_API_KEY` | Optional | *(empty)* | Google Drive API key for the photo gallery feature. |
+| `GDRIVE_GALLERY_FOLDER_ID` | Optional | *(empty)* | Google Drive folder ID containing gallery images. |
+
+### Cloudflare
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `CLOUDFLARE_ACCOUNT_ID` | Optional | *(empty)* | Cloudflare account ID. Set this when you have access to multiple Cloudflare accounts to avoid ambiguity during deployment. |
+
+## GitHub Access Token (`GH_ACCESS_TOKEN`)
+
+The token is used to authenticate GitHub API requests, such as loading blog posts from GitHub Discussions.
+
+<Steps>
+  <Step title="Go to GitHub token settings">
+    Navigate to **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**.
+  </Step>
+
+  <Step title="Generate a new token">
+    Create a token scoped to the `acmcsufoss/acmcsuf.com` repository with **read-only** access to:
+    - **Discussions** (for blog post fetching)
+  </Step>
+
+  <Step title="Copy the token into your .env">
+    ```bash
+    GH_ACCESS_TOKEN="github_pat_..."
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit a real Personal Access Token to the repository. The `.env` and `.env.production` files are listed in `.gitignore`. If a token is accidentally exposed, revoke it immediately from GitHub Settings.
+</Warning>
+
+## GitHub Discussions Category (`GH_DISCUSSION_CATEGORY_ID`)
+
+This is the GraphQL node ID of the Discussions category that serves as the blog source. The default value `DIC_kwDOE7ysSc4CAC0o` points to the existing **Newsletter** category in the `acmcsufoss/acmcsuf.com` repository.
+
+If you need to find a category ID for a different repository, use the GitHub GraphQL API or GitHub's GraphQL explorer.
+
+## CI Environment
+
+In the `check_website.yaml` workflow, CI populates `.env` directly from `.env.example` before running checks:
+
+```yaml
+- name: Copy .env from .env.example
+  run: cp .env.example .env
+```
+
+This means all variables in `.env.example` must have values that allow the build and tests to pass without real credentials.

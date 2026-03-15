@@ -1,0 +1,71 @@
+---
+title: "ACM at CSUF"
+description: "The official website of ACM at California State University, Fullerton — a community for students passionate about computing, open source, and technology."
+---
+
+<img
+  src="https://media.brand.dev/ec0e83e8-10ce-45a6-93c1-29c524be8acd.jpg"
+  alt="ACM at CSUF"
+  style={{ borderRadius: '8px', marginBottom: '24px' }}
+/>
+
+## Welcome to ACM at CSUF
+
+ACM at CSUF ([acmcsuf.com](https://acmcsuf.com)) is the official website for the Association for Computing Machinery chapter at California State University, Fullerton. The site serves as a hub for students to discover events, explore learning paths, meet the team, and engage with the broader ACM community.
+
+The site is built with [SvelteKit](https://kit.svelte.dev/) and deployed on [Cloudflare Workers](https://workers.cloudflare.com/), making it fast, lightweight, and easy to contribute to.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Get the site running locally in under 5 minutes
+  </Card>
+  <Card title="Local Setup" icon="computer" href="/getting-started/local-setup">
+    Full development environment setup guide
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/contributing/overview">
+    How to contribute code, content, and fixes
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
+    Understand how the codebase is structured
+  </Card>
+</CardGroup>
+
+## What's on the site
+
+<CardGroup cols={2}>
+  <Card title="Events" icon="calendar" href="/features/events">
+    Browse and discover upcoming ACM events powered by Google Calendar
+  </Card>
+  <Card title="Blog" icon="newspaper" href="/features/blog">
+    Read articles and newsletters published via GitHub Discussions
+  </Card>
+  <Card title="Teams" icon="users" href="/features/teams">
+    Meet the board members and officers running ACM at CSUF
+  </Card>
+  <Card title="Hackathons" icon="trophy" href="/features/hackathons">
+    Explore past and upcoming hackathon events
+  </Card>
+  <Card title="LeetCode Dailies" icon="code" href="/features/lc-dailies">
+    Track daily LeetCode challenge completions with your peers
+  </Card>
+  <Card title="Short Links" icon="link" href="/features/shorter-links">
+    Manage vanity URLs and shortlinks for ACM resources
+  </Card>
+</CardGroup>
+
+## Tech stack
+
+| Technology | Purpose |
+|---|---|
+| [SvelteKit](https://kit.svelte.dev/) | Full-stack web framework |
+| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
+| [Cloudflare Workers](https://workers.cloudflare.com/) | Hosting and deployment |
+| [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | Deployment CLI |
+| [Vite](https://vitejs.dev/) | Build tooling |
+| [Vitest](https://vitest.dev/) | Unit testing |
+| [Google Calendar API](https://developers.google.com/calendar) | Events data |
+| [GitHub Discussions](https://docs.github.com/en/discussions) | Blog posts / newsletter |
+
+## License
+
+acmcsuf.com is open source under the [MIT License](https://github.com/acmcsufoss/acmcsuf.com/blob/main/LICENSE).

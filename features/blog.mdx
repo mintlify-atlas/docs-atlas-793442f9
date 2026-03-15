@@ -1,0 +1,114 @@
+---
+title: "Blog (README)"
+description: "Read and write posts on the official ACM at CSUF blog, powered by GitHub Discussions."
+---
+
+The Blog — branded as **README by ACM at CSUF** — lives at `acmcsuf.com/blog`. It is the official blog of ACM at CSUF, where officers and members publish articles, tutorials, announcements, and club updates.
+
+## What it shows
+
+The blog page displays a grid of post preview cards. Each post includes:
+
+- **Title**
+- **Author** — display name, full name, profile picture, and a link to their GitHub profile
+- **Date created** and optionally a last-edited date
+- **Labels** (tags) — used for filtering
+- **Body preview** — a rendered HTML excerpt
+
+An RSS feed is available at `/feed.xml`.
+
+## Filtering by label
+
+The top of the page shows a label filter. Selecting one or more labels narrows the post list to matching posts. The URL updates to reflect the active filter (e.g., `/blog?l=tutorial`), making filtered views shareable.
+
+Clicking **✖ Clear all** resets the filter and shows all posts.
+
+## How to read a post
+
+<Steps>
+  <Step title="Go to the blog">
+    Navigate to `acmcsuf.com/blog`.
+  </Step>
+  <Step title="Filter by tag (optional)">
+    Use the label filter to narrow posts by topic.
+  </Step>
+  <Step title="Open a post">
+    Click a post card to open the full post at `/blog/{id}`.
+  </Step>
+</Steps>
+
+## How to write a post (contributors)
+
+Blog posts are stored as **GitHub Discussions** in the `Newsletter` category of the acmcsuf.com repository.
+
+<Steps>
+  <Step title="Create a new discussion">
+    Go to `acmcsuf.com/blog/new` (which redirects to the GitHub Discussions new-post form pre-set to the Newsletter category).
+  </Step>
+  <Step title="Write your post">
+    Use GitHub Markdown to write the post body. The discussion title becomes the post title.
+  </Step>
+  <Step title="Add labels">
+    Apply GitHub Discussion labels to categorize your post. These labels appear as filterable tags on the blog.
+  </Step>
+  <Step title="Publish">
+    Submit the discussion. It will appear on `acmcsuf.com/blog` once the site fetches the latest discussions.
+  </Step>
+</Steps>
+
+<Tip>
+  To edit an existing post, edit the corresponding GitHub Discussion directly.
+</Tip>
+
+## Data source
+
+Posts are fetched from the GitHub GraphQL API using a personal access token. The server reads discussions from the `Newsletter` category.
+
+Required environment variables:
+
+```sh
+# Your personal GitHub access token
+GH_ACCESS_TOKEN=YOUR_PAT
+
+# GitHub Discussion category ID for the Newsletter category
+GH_DISCUSSION_CATEGORY_ID=DIC_kwDOE7ysSc4CAC0o
+```
+
+<Warning>
+Never commit your `GH_ACCESS_TOKEN` to the repository. The `.env` file is git-ignored.
+</Warning>
+
+## Post data shape
+
+Each post is typed as `BlogPost` in `src/lib/public/blog/types.ts`:
+
+```typescript
+export interface BlogPost {
+  id: number;
+  url: string;
+  discussionURL: string;
+  title: string;
+  html: string;
+  bodyText: string;
+  createdAt: string;
+  lastEdited: string | null;
+  labels: string[];
+  author: {
+    displayname: string;
+    fullname?: string;
+    url: string;
+    picture: string;
+  };
+}
+```
+
+## URL structure
+
+| URL | Description |
+|-----|-------------|
+| `/blog` | All posts |
+| `/blog?l=label` | Posts filtered by label |
+| `/blog/{id}` | Single post by GitHub Discussion ID |
+| `/blog/{id}.txt` | Plain text version of a post |
+| `/feed.xml` | RSS feed |
+| `/blog/new` | Shortlink to create a new GitHub Discussion post |

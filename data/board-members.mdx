@@ -1,0 +1,153 @@
+---
+title: "Board Members"
+description: "How board member data is managed in acmcsuf.com, from the JSON data file to the Boardify self-service tool."
+---
+
+Board member data powers the [/teams](https://acmcsuf.com/teams) page. It is stored as a JSON file in the repository and can be updated either by directly editing the file or through the self-service Boardify tool.
+
+## Data location
+
+All officer records live in a single file:
+
+```
+src/lib/public/board/data/officers.json
+```
+
+This file is an array of `Officer` objects. The TypeScript types that define the shape of each record are in `src/lib/public/board/types.ts`.
+
+## TypeScript types
+
+```typescript
+/**
+ * Term is a string that identifies a CSUF semester.
+ */
+export enum Term {
+  Spring21 = 'S21',
+  Fall21 = 'F21',
+  Spring22 = 'S22',
+  Fall22 = 'F22',
+  Spring23 = 'S23',
+  Fall23 = 'F23',
+  Spring24 = 'S24',
+  Fall24 = 'F24',
+  Spring25 = 'S25',
+  Fall25 = 'F25',
+  Spring26 = 'S26',
+}
+
+/**
+ * Position represents a role an officer holds within a term.
+ */
+export interface Position {
+  /** Displayed on the website. */
+  title: string;
+  /** References a tier ID from tiers.json to control display order. */
+  tier: number;
+}
+
+/**
+ * Officer represents a board member across one or more terms.
+ */
+export interface Officer {
+  fullName: string;
+  picture?: string;       // filename under /static/people/
+  positions: {
+    [key in Term]?: Position[];
+  };
+  discord?: string;       // Discord handle, e.g. "@diane11a"
+  displayName?: string;   // Optional display name override
+}
+```
+
+## JSON structure
+
+Each entry in `officers.json` maps to one board member. A single officer may hold positions across multiple terms.
+
+```json
+{
+  "fullName": "Dianella Sy",
+  "picture": "dianella-sy.webp",
+  "positions": {
+    "F25": [
+      { "title": "Webmaster", "tier": 2 },
+      { "title": "Open Source Co-TL", "tier": 33 }
+    ],
+    "S26": [
+      { "title": "Webmaster", "tier": 2 },
+      { "title": "Open Source Co-TL", "tier": 33 }
+    ]
+  },
+  "discord": "@diane11a"
+}
+```
+
+<Info>
+Tier IDs are defined in `src/lib/public/board/data/tiers.json`. The lower the tier's `index` value, the higher the member appears in the list. For example, `President` has index `100` and `Webmaster` has index `200`.
+</Info>
+
+## Updating an officer
+
+<Tabs>
+  <Tab title="Manual edit">
+    <Steps>
+      <Step title="Open the data file">
+        Open `src/lib/public/board/data/officers.json` in your editor.
+      </Step>
+      <Step title="Find or add the officer entry">
+        Search for the officer by `fullName`. If they do not exist yet, append a new object to the array.
+      </Step>
+      <Step title="Edit the fields">
+        Update `fullName`, `picture`, `discord`, or any term's `positions` array. Term keys follow the pattern `S21`, `F21`, `S22`, … matching the `Term` enum values.
+      </Step>
+      <Step title="Add the headshot (if new)">
+        Place the headshot file in `/static/people/` and set `picture` to the filename (e.g. `"jane-doe.webp"`). See the [Headshots](#headshots) section for consent requirements.
+      </Step>
+      <Step title="Run checks and open a PR">
+        ```bash
+        npm run all
+        ```
+        Then open a pull request against the `main` branch.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Discord slash command">
+    Board members can update their own record without touching the repository.
+
+    <Steps>
+      <Step title="Open the ACM at CSUF Discord server">
+        Join the official club Discord server.
+      </Step>
+      <Step title="Run the /boardd command">
+        Use the `/boardd` slash command in the appropriate channel. The bot will prompt you for the fields to update.
+      </Step>
+      <Step title="Bot opens a pull request">
+        The bot submits a pull request on your behalf. A maintainer will review and merge it.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For full details on using the bot, visit [acmcsuf.com/boardify](https://acmcsuf.com/boardify).
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Boardify tool
+
+The [acmcsuf.com/boardify](https://acmcsuf.com/boardify) page is a self-service tool for board members to prepare their profile headshot for the teams page.
+
+**How it works:**
+
+1. Upload your headshot image.
+2. Drag the crop box to position it.
+3. Copy the resulting image link to your clipboard.
+4. Share the link in the ACM at CSUF Discord server so it can be submitted with the `/boardd` command.
+
+## Headshots
+
+Headshot images are stored in `/static/people/`. The `picture` field in the officer's JSON entry must match the exact filename (including extension).
+
+<Warning>
+Obtaining the board member's consent before uploading their photo is required. Do not add a headshot without the person's explicit permission.
+</Warning>
+
+If no `picture` is set for an officer, the site falls back to a placeholder image (`placeholder.webp`).

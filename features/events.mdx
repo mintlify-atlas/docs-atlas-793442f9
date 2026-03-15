@@ -1,0 +1,128 @@
+---
+title: "Events"
+description: "Browse and add upcoming ACM at CSUF workshops, info sessions, and community events."
+---
+
+The Events page at `acmcsuf.com/events` lists all upcoming events hosted by ACM at CSUF. Events are open to anyone interested, regardless of major or background experience.
+
+## What it shows
+
+Each event card displays:
+
+- **Title** — the name of the event
+- **Date and time** — month, day, start time, and end time
+- **Location** — physical room or virtual platform (Zoom, Discord, etc.)
+- **Description** — a full description sourced from the Google Calendar event body
+- **Team** — which ACM team is hosting (e.g., `general`, `dev`, `ai`)
+- **Meeting link** — a direct link to join the event virtually
+- **Add to calendar** — one-click links to add the event to Google Calendar or Outlook
+
+<Note>
+Events are fetched live from the ACM at CSUF Google Calendar. The page shows up to 100 upcoming events ordered by start time.
+</Note>
+
+## How to use
+
+<Steps>
+  <Step title="Navigate to the events page">
+    Go to `acmcsuf.com/events`. If no events are currently scheduled, the page displays "There are no events scheduled!"
+  </Step>
+  <Step title="Browse upcoming events">
+    Scroll through the list of upcoming event cards. Each card shows the date, time, location, and a description.
+  </Step>
+  <Step title="Join or save an event">
+    Click the meeting link to join virtually, or use the Google Calendar or Outlook buttons to save the event to your personal calendar.
+  </Step>
+</Steps>
+
+## Data source
+
+Event data is pulled from the ACM at CSUF Google Calendar using the Google Calendar API (`@googleapis/calendar`). The server fetches events with `timeMin` set to the current time and `maxResults` of 100, ordered by `startTime`.
+
+The server function responsible for fetching is in `src/lib/server/events/gcal.ts`:
+
+```typescript
+export async function listUpcomingEvents() {
+  const cal = calendar({
+    version: 'v3',
+    auth: GCAL_API_KEY,
+  });
+  return (
+    (
+      await cal.events.list({
+        calendarId: GCAL_ID,
+        timeMin: new Date().toISOString(),
+        maxResults: 100,
+        singleEvents: true,
+        orderBy: 'startTime',
+        showDeleted: false,
+      })
+    )?.data?.items ?? []
+  );
+}
+```
+
+## Event data shape
+
+Each event is typed as `ClubEvent` in `src/lib/public/events/event.ts`:
+
+```typescript
+export interface ClubEvent {
+  month: string;
+  day: number;
+  startTime: string;
+  endTime: string;
+  hasStarted: boolean;
+  hasEnded: boolean;
+  date: string;
+  location: string;
+  title: string;
+  description: string;
+  summary: string;
+  meetingLink: string;
+  id: string;
+  selfLink: string;
+  recurring: boolean;
+  team: string;
+  calendarLinks: {
+    google: string;
+    outlook: string;
+  };
+}
+```
+
+## ACM_TEAM variable in event descriptions
+
+Event organizers can embed a variable in the Google Calendar event description to associate the event with a specific ACM team:
+
+```
+ACM_TEAM=dev
+```
+
+Or equivalently:
+
+```
+ACM_PATH=dev
+```
+
+This variable is parsed by `parseDescription()` in `src/lib/server/events/event.ts` and stripped from the public description. If no team variable is present, the event defaults to the `general` team.
+
+## Location parsing
+
+The `parseLocation()` function normalizes the raw location string from Google Calendar:
+
+| Raw location value | Resolved `location` | Resolved `meetingLink` |
+|--------------------|---------------------|------------------------|
+| Zoom URL (`zoom.us` domain) | `"Zoom"` | The Zoom URL |
+| Any `https://` URL | `"TBD"` | The URL |
+| Plain text (e.g., room number) | The text as-is | `/discord` |
+| Empty | `"TBD"` | `/discord` |
+
+## Environment variables
+
+The events feature requires these server-side environment variables:
+
+```sh
+GCAL_API_KEY=YOUR_GOOGLE_CALENDAR_API_KEY
+GCAL_ID=YOUR_CALENDAR_ID
+```

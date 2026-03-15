@@ -1,0 +1,109 @@
+---
+title: "Branding"
+description: "Download team logos and reference official brand colors for ACM at CSUF teams."
+---
+
+The Branding page at `acmcsuf.com/branding` is a central resource for ACM at CSUF's visual identity. It provides logos and official brand colors for each team, available in SVG and PNG formats.
+
+## What it includes
+
+For each team, the branding page shows:
+
+- **Team logo** — available to download as SVG and PNG
+- **Team color** — the official color name, hex value, and RGB value
+
+## Team brand colors
+
+| Team | Color name | Hex | RGB |
+|------|-----------|-----|-----|
+| General | Primary Blue | `#06a3ff` | `6, 163, 255` |
+| AI | AI Green | `#35e792` | `53, 231, 146` |
+| Algo | Algo Purple | `#af3fff` | `175, 63, 255` |
+| Design | Design Red | `#ff406d` | `255, 64, 109` |
+| Dev | Dev Blue | `#1F6CFF` | `31, 108, 255` |
+| Game Dev | Game Dev Red | `#D41253` | `212, 18, 83` |
+| ICPC | ICPC Orange | `#FF7918` | `255, 121, 24` |
+| Marketing | Marketing Pink | `#FE0FC9` | `254, 15, 201` |
+| Node Buds | Node Buds Red | `#D41253` | `212, 18, 83` |
+| Open Source | OS Green | `#13d4b1` | `19, 212, 177` |
+
+## How to use the page
+
+<Steps>
+  <Step title="Navigate to the branding page">
+    Go to `acmcsuf.com/branding`.
+  </Step>
+  <Step title="Find your team's section">
+    Each team has its own section showing the team logo and brand color swatch.
+  </Step>
+  <Step title="Download the logo">
+    Use the SVG or PNG download links provided under each team logo.
+  </Step>
+  <Step title="Reference the color values">
+    Copy the hex or RGB value from the color swatch to use in designs or code.
+  </Step>
+</Steps>
+
+<Tip>
+  The global CSS variables for these colors are defined in `/global.css`, which is also linked from the bottom of the branding page.
+</Tip>
+
+## Logo assets
+
+Logos are stored in `static/assets/` and follow the naming pattern `{team-id}-logo.svg` / `{team-id}-logo.png`.
+
+| Team | SVG path | PNG path |
+|------|----------|----------|
+| General | `/assets/general-logo.svg` | `/assets/general-logo.png` |
+| AI | `/assets/ai-logo.svg` | `/assets/ai-logo.png` |
+| Algo | `/assets/algo-logo.svg` | `/assets/algo-logo.png` |
+| Design | `/assets/design-logo.svg` | `/assets/design-logo.png` |
+| Dev | `/assets/dev-logo.svg` | `/assets/dev-logo.png` |
+| Game Dev | `/assets/gamedev-logo.svg` | `/assets/gamedev-logo.png` |
+| ICPC | `/assets/icpc-logo.svg` | — |
+| Marketing | `/assets/marketing-logo.svg` | `/assets/marketing-logo.png` |
+| Node Buds | `/assets/nodebuds-logo-old.svg` | `/assets/nodebuds-logo-old.png` |
+| Open Source | `/assets/oss-logo.svg` | `/assets/oss-logo.png` |
+
+## Data structure
+
+Branding data is defined in `src/routes/(site)/branding/data.ts` as a static array satisfying the `Branding` interface from `src/lib/public/branding/branding.ts`:
+
+```typescript
+export interface Branding {
+  title: string;
+  description: string;
+  teamLogo: TeamLogo;
+  teamColor: TeamColor;
+}
+
+export interface TeamLogo {
+  image: string;
+  alt: string;
+  title: string;
+  svg: string;
+  png: string;
+}
+
+export interface TeamColor {
+  name: string;
+  hex: string;
+  rgb: string;
+}
+```
+
+## Adding or updating branding (contributors)
+
+To add a new team or update an existing team's branding:
+
+<Steps>
+  <Step title="Add the logo assets">
+    Place the SVG and PNG logos in `static/assets/` following the `{team-id}-logo.svg` naming convention.
+  </Step>
+  <Step title="Update data.ts">
+    Add or update an entry in `src/routes/(site)/branding/data.ts` with the team's title, description, logo paths, and color values.
+  </Step>
+  <Step title="Verify on the branding page">
+    Run `npm run dev` and navigate to `/branding` to confirm the logo and color swatch appear correctly.
+  </Step>
+</Steps>

@@ -1,0 +1,133 @@
+---
+title: "Architecture overview"
+description: "High-level overview of how the acmcsuf.com project is structured, what technologies power it, and how the pieces fit together."
+---
+
+acmcsuf.com is built with [SvelteKit](https://kit.svelte.dev/) and deployed to [Cloudflare Workers](https://workers.cloudflare.com/) via the `@sveltejs/adapter-cloudflare` adapter. The stack is intentionally lightweight: Svelte handles the UI, TypeScript enforces type safety throughout, Vite drives the build, and Vitest runs the test suite.
+
+## Framework and deployment
+
+| Concern | Technology |
+| --- | --- |
+| UI framework | [Svelte](https://svelte.dev) via SvelteKit |
+| Adapter | `@sveltejs/adapter-cloudflare` |
+| Runtime | Cloudflare Workers (edge) |
+| Build tool | Vite (via `@sveltejs/vite-plugin-svelte`) |
+| Testing | Vitest |
+| Language | TypeScript (strict mode) |
+| Styling | CSS / Sass (scoped per component) |
+
+The adapter is configured in `svelte.config.js`:
+
+```javascript svelte.config.js
+import adapter from '@sveltejs/adapter-cloudflare';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const config = {
+  preprocess: vitePreprocess(),
+  kit: {
+    adapter: adapter(),
+  },
+};
+
+export default config;
+```
+
+Vite is configured in `vite.config.ts`, which also tells Vitest where to look for tests:
+
+```typescript vite.config.ts
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [sveltekit()],
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+  },
+});
+```
+
+## Directory structure
+
+```
+acmcsuf.com/
+├── src/
+│   ├── routes/
+│   │   └── (site)/          # All public pages (route group)
+│   ├── lib/
+│   │   ├── components/      # Reusable Svelte UI components
+│   │   ├── public/          # Shared client-safe logic and types
+│   │   └── server/          # Server-only data fetching and processing
+│   ├── app.d.ts             # SvelteKit global type declarations
+│   └── hooks.server.ts      # Server hooks (theme, URL shortener)
+├── static/
+│   ├── global.css           # Site-wide CSS variables and utility classes
+│   ├── assets/              # Images and other static files
+│   └── people/              # Board member headshots
+├── svelte.config.js
+├── vite.config.ts
+├── tsconfig.json
+└── wrangler.toml            # Cloudflare Workers configuration
+```
+
+## Key source directories
+
+<CardGroup cols={2}>
+  <Card title="src/routes/(site)/" icon="map" href="/architecture/routes">
+    Every public page of the website. SvelteKit file-system routing maps files to URLs automatically.
+  </Card>
+  <Card title="src/lib/components/" icon="puzzle" href="/architecture/components">
+    Reusable Svelte components — navigation, footer, blog cards, board members, and more.
+  </Card>
+  <Card title="src/lib/server/" icon="server" href="/architecture/server-lib">
+    Server-only modules for data fetching (GitHub GraphQL, Google Calendar, Google Drive), caching, and environment variable access.
+  </Card>
+  <Card title="src/lib/public/" icon="globe" href="/architecture/components">
+    Shared logic that is safe to run on both client and server — types, utilities, and Svelte stores.
+  </Card>
+</CardGroup>
+
+## How the pieces fit together
+
+1. **Request arrives** at a Cloudflare Worker.
+2. **`src/hooks.server.ts`** runs first. It sequences two handlers: the URL shortener (redirects short links) and the theme handler (reads the `theme` cookie and injects the correct `data-theme` attribute into the HTML).
+3. **SvelteKit routing** matches the URL to a file under `src/routes/(site)/`.
+4. **`+page.ts` load functions** fetch data — they call JSON endpoints that are themselves backed by server-side modules in `src/lib/server/`.
+5. **`+page.svelte` components** receive that data as props and render HTML.
+6. **`+layout.svelte`** wraps every page with the `<Navbar>`, `<Footer>`, and `<AcmToaster>` components.
+
+<Note>
+  `src/lib/server/` modules are never bundled into the client. SvelteKit enforces this boundary — importing a server module from a client component is a build-time error.
+</Note>
+
+## TypeScript configuration
+
+`tsconfig.json` extends the auto-generated `.svelte-kit/tsconfig.json` and enables strict mode:
+
+```json tsconfig.json
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true
+  }
+}
+```
+
+Path aliases (e.g. `$lib`) are provided automatically by SvelteKit and do not need to be declared manually in `tsconfig.json`.
+
+## Static assets
+
+The `static/` directory is served verbatim by Cloudflare.
+
+| Path | Purpose |
+| --- | --- |
+| `static/global.css` | Site-wide CSS custom properties and utility classes. Edit with care — deletions can cause site-wide regressions. |
+| `static/assets/` | Images and SVG files referenced by pages and components. |
+| `static/people/` | Normalised board member headshots. Each person has given consent for their photo to be public. |

@@ -1,0 +1,149 @@
+---
+title: "Environment setup"
+description: "Install dependencies, configure your .env file, and run the acmcsuf.com dev server locally."
+---
+
+## Prerequisites
+
+Before cloning the repository, make sure you have the following installed:
+
+- **Node.js** `>=22.0.0` — [nodejs.org/en/download](https://nodejs.org/en/download/)
+- **npm** `>=10.5.1` — included with Node.js
+- **Git** — [git-scm.com/downloads](https://git-scm.com/downloads)
+
+<Tip>
+  If you are not comfortable with the Git command line, you can use [GitHub Desktop](https://desktop.github.com/) instead.
+</Tip>
+
+## Setup
+
+<Steps>
+  <Step title="Fork the repository">
+    Create a fork of [acmcsuf.com](https://github.com/acmcsufoss/acmcsuf.com) on GitHub. You will clone your fork, not the upstream repository.
+  </Step>
+  <Step title="Clone your fork">
+    Clone your forked repository to your local machine.
+
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/acmcsuf.com.git
+    ```
+
+    Alternatively, you can [directly download](https://etok.codes/acmcsuf.com/archive/main.zip) the repository as a ZIP archive.
+  </Step>
+  <Step title="Install dependencies">
+    Open a terminal inside the cloned directory and install the project dependencies.
+
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="Configure your .env file">
+    Copy `.env.example` to `.env` in the root of the repository.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Then edit `.env` and fill in the required values. See [Environment variables](#environment-variables) below.
+  </Step>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:5173/](http://localhost:5173/) in your browser. The page reloads automatically on every file change.
+  </Step>
+  <Step title="Verify changes in production mode">
+    Before submitting a PR, run the preview command to confirm your changes look correct in the production environment.
+
+    ```bash
+    npm run preview
+    ```
+  </Step>
+</Steps>
+
+## Environment variables
+
+### Required variables
+
+<Note>
+  If you are only running tests and not making a deployment, you do not need to generate any tokens. Copy `.env.example` to `.env` and define any missing variables as empty strings (e.g., `VARIABLE_NAME=""`).
+</Note>
+
+```sh
+# Your personal GitHub access token
+GH_ACCESS_TOKEN=YOUR_PAT
+
+# Newsletter discussion category ID (safe to copy as-is)
+GH_DISCUSSION_CATEGORY_ID=DIC_kwDOE7ysSc4CAC0o
+
+# Set to 1 to enable debug mode, 0 to disable
+DEBUG_MODE_ENABLED=0
+```
+
+**`GH_ACCESS_TOKEN`** — A personal access token used to authenticate requests to GitHub. This prevents rate limiting when the site fetches data such as blog posts. Generate one at [github.com/settings/tokens](https://github.com/settings/tokens).
+
+**`GH_DISCUSSION_CATEGORY_ID`** — Identifies the GitHub Discussions category used for newsletter posts. The value is already public and can be copied directly from `.env.example`.
+
+**`DEBUG_MODE_ENABLED`** — Set to `1` to enable debug mode. Defaults to `0`.
+
+<Warning>
+  Never commit your personal access token or any other sensitive value to the repository. The `.env` file is listed in `.gitignore` and must stay that way.
+</Warning>
+
+### Optional Google API variables
+
+Required for pages that use Google Calendar or Google Drive integrations.
+
+```sh
+GCAL_API_KEY=""
+GCAL_ID=""
+GDRIVE_GALLERY_API_KEY=""
+GDRIVE_GALLERY_FOLDER_ID=""
+```
+
+### Optional Discord bot variables
+
+Required only for running scripts related to the Discord integration (not needed for local development of the website itself).
+
+```sh
+DISCORD_BOT_TOKEN=YOUR_BOT_TOKEN
+GUILD_ID=YOUR_GUILD_ID
+HUB_ID=YOUR_HUB_CHANNEL_ID
+ARCHIVE_CHANNEL_ID=YOUR_ARCHIVE_CHANNEL_ID
+```
+
+### Optional Cloudflare variable
+
+```sh
+CLOUDFLARE_ACCOUNT_ID=""
+```
+
+## Running tests and quality checks
+
+Run all checks at once with:
+
+```bash
+npm run all
+```
+
+This runs lint, format, type check, build, and unit tests in sequence. You must pass all of these before submitting a pull request.
+
+To run individual checks:
+
+```bash
+# Run unit tests
+npm t
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Type check, unused CSS, and more
+npm run check
+
+# Lint
+npm run lint
+
+# Format
+npm run format
+```

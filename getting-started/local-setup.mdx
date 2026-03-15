@@ -1,0 +1,179 @@
+---
+title: "Local Setup"
+description: "Full guide to setting up the acmcsuf.com development environment, including environment variables and available npm scripts."
+---
+
+## Prerequisites
+
+The following tools must be installed before you begin:
+
+| Tool | Required version | Notes |
+|------|-----------------|-------|
+| Node.js | `>=22.0.0` | Install the latest LTS from [nodejs.org](https://nodejs.org/en/download/) |
+| npm | `>=10.5.1` | Bundled with Node.js |
+| Git | Any recent version | [git-scm.com/downloads](https://git-scm.com/downloads) |
+
+## Fork vs. clone
+
+If you are **contributing** to the project, you must work from a fork rather than directly from the main repository.
+
+- **Fork**: Create your own copy of [acmcsuf.com on GitHub](https://github.com/acmcsufoss/acmcsuf.com), then clone your fork.
+- **Clone** (read-only / internal team): Clone the main repository directly.
+
+<Warning>
+  Do not commit directly to the main branch. Always create a new branch from your fork before making changes.
+</Warning>
+
+## Setup steps
+
+<Steps>
+  <Step title="Fork and clone the repository">
+    Fork the repository on GitHub, then clone your fork locally:
+
+    ```bash
+    git clone https://github.com/<your-username>/acmcsuf.com.git
+    cd acmcsuf.com
+    ```
+
+    Replace `<your-username>` with your GitHub username.
+  </Step>
+
+  <Step title="Install dependencies">
+    Install the required Node.js dependencies:
+
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Set up the .env file">
+    Copy the example environment file to create your own `.env`:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Then open `.env` and fill in the required values (see [Environment variables](#environment-variables) below).
+
+    <Tip>
+      If you're only running tests and not working on features that require third-party data (such as the blog), you don't need to generate any tokens. Copy `.env.example` to `.env` as-is, and define any missing variables as empty strings: `VARIABLE_NAME=""`.
+    </Tip>
+  </Step>
+
+  <Step title="Start the development server">
+    Run the development server:
+
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:5173/](http://localhost:5173/) in your browser. The page reloads automatically whenever you save a source file.
+  </Step>
+</Steps>
+
+## Environment variables
+
+The `.env` file controls access to third-party services. The `.env.example` in the repository shows all supported variables:
+
+```sh
+DEBUG_FLAG_ENABLED=1
+
+GH_DISCUSSION_CATEGORY_ID="DIC_kwDOE7ysSc4CAC0o"
+GH_ACCESS_TOKEN="💖"
+
+GCAL_API_KEY=""
+GCAL_ID=""
+GDRIVE_GALLERY_API_KEY=""
+GDRIVE_GALLERY_FOLDER_ID=""
+
+CLOUDFLARE_ACCOUNT_ID=""
+```
+
+The three variables most commonly needed for local development are:
+
+### `GH_ACCESS_TOKEN`
+
+A personal GitHub access token used to authenticate requests to the GitHub API (for example, fetching blog posts from GitHub Discussions) and to avoid rate limiting.
+
+```sh
+GH_ACCESS_TOKEN=YOUR_PAT
+```
+
+Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens).
+
+<Warning>
+  Never commit your personal access token or any other secrets to the repository. The `.env` file is listed in `.gitignore` and must stay out of version control.
+</Warning>
+
+### `GH_DISCUSSION_CATEGORY_ID`
+
+Identifies which GitHub Discussions category to read for blog posts. The value for the main repository is already public and can be copied as-is:
+
+```sh
+GH_DISCUSSION_CATEGORY_ID=DIC_kwDOE7ysSc4CAC0o
+```
+
+### `DEBUG_MODE_ENABLED`
+
+Set to `1` to enable debug mode, or `0` (the default) to disable it:
+
+```sh
+# Enable debug mode
+DEBUG_MODE_ENABLED=1
+
+# Disable debug mode (default)
+DEBUG_MODE_ENABLED=0
+```
+
+## Running the site
+
+<CodeGroup>
+
+```bash Development
+# Start the hot-reloading development server
+npm run dev
+```
+
+```bash Production preview
+# Build the site and serve it locally via Wrangler (mirrors Cloudflare Workers)
+npm run preview
+```
+
+</CodeGroup>
+
+Use `npm run preview` to verify that your changes work correctly in the production environment before submitting a pull request.
+
+## Pre-PR checks
+
+Before opening a pull request, you **must** run the full check suite:
+
+```bash
+npm run all
+```
+
+This single command runs linting, formatting, type checking, a production build, and all unit tests in sequence. The automated CI will run the same checks, so running `npm run all` locally first prevents avoidable failures.
+
+<Note>
+  `npm run all` may modify your files — the autoformatter and linter can rewrite source files to comply with the project's style guidelines.
+</Note>
+
+## Available npm scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start the Vite development server |
+| `npm run build` | Build the site |
+| `npm run build:prod` | Build the site in production mode |
+| `npm run preview` | Build and serve locally via Wrangler (Cloudflare Workers) |
+| `npm run preview:live` | Build in production mode and upload a Cloudflare version |
+| `npm test` | Run all unit tests (alias: `npm t`) |
+| `npm run test:watch` | Run unit tests in watch mode |
+| `npm run test:coverage` | Run tests and generate a coverage report |
+| `npm run test:size` | Build and check worker bundle size against the 50 KB limit |
+| `npm run check` | Run `svelte-check` for type errors and unused CSS |
+| `npm run lint` | Run ESLint with auto-fix |
+| `npm run format` | Run Prettier with auto-write |
+| `npm run all` | Run lint, format, check, build, and tests (required before PR) |
+| `npm run host` | Run `npm run all` then serve the production build locally |
+| `npm run deploy` | Build in production mode and deploy to Cloudflare Workers |
+| `npm run generate:colors` | Regenerate the color palette via `scripts/generate-colors/index.js` |

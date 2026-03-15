@@ -1,0 +1,203 @@
+---
+title: "CI/CD"
+description: "GitHub Actions workflows that automate checks, builds, blog notifications, and dependency updates for acmcsuf.com."
+---
+
+## Overview
+
+acmcsuf.com uses GitHub Actions for continuous integration and automation. Workflows live in `.github/workflows/` and cover build checks, blog webhooks, and scheduled dependency updates.
+
+## Workflows
+
+### Website Check (`check_website.yaml`)
+
+This is the primary CI workflow. It runs on every push to `main`, every pull request targeting `main`, and can also be triggered manually.
+
+```yaml
+name: Website Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  website_check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+```
+
+<Info>
+  The job runs in parallel on **Ubuntu**, **Windows**, and **macOS** to catch platform-specific issues.
+</Info>
+
+#### Steps
+
+<Steps>
+  <Step title="Checkout">
+    Checks out the repository using `actions/checkout@v4`.
+  </Step>
+
+  <Step title="Set up Node.js">
+    Installs the Node.js version specified in `.nvmrc` (currently `22.19.0`) using `actions/setup-node@v5` with npm caching enabled.
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm ci
+    ```
+  </Step>
+
+  <Step title="Copy .env from .env.example">
+    ```bash
+    cp .env.example .env
+    ```
+
+    This populates all environment variables using the safe placeholder values from the example file, so the build and tests can run without real credentials.
+  </Step>
+
+  <Step title="Svelte check">
+    ```bash
+    npm run check
+    ```
+
+    Runs `svelte-kit sync` and `svelte-check` with strict TypeScript and compiler warning settings.
+  </Step>
+
+  <Step title="Format">
+    ```bash
+    npm run format && git diff --exit-code
+    ```
+
+    Runs Prettier and fails the job if any files were reformatted (i.e., were not already formatted).
+  </Step>
+
+  <Step title="Lint">
+    ```bash
+    npm run lint && git diff --exit-code
+    ```
+
+    Runs ESLint with auto-fix and fails if any changes are produced.
+  </Step>
+
+  <Step title="Vitest tests">
+    ```bash
+    npm t
+    ```
+
+    Runs the full Vitest test suite.
+  </Step>
+
+  <Step title="Size check">
+    ```bash
+    npm run test:size
+    ```
+
+    Builds the project and enforces the 50 KB bundle size limit on `.svelte-kit/cloudflare/_worker.js`.
+  </Step>
+
+  <Step title="Transform Genuary check (conditional)">
+    If files under `scripts/transform-genuary` were modified, runs the transform's own test script:
+
+    ```bash
+    node scripts/transform-genuary/test.js
+    ```
+  </Step>
+</Steps>
+
+#### Running the same checks locally
+
+The `npm run all` script mirrors what CI enforces:
+
+```bash
+npm run all
+# equivalent to: npm run lint && npm run format && npm run check && npm run build && npm t
+```
+
+<Tip>
+  Run `npm run all` before pushing to catch any issues that would fail the CI workflow.
+</Tip>
+
+---
+
+### Blog Webhook (`blog_webhook_exec.yaml`)
+
+This workflow fires when a new GitHub Discussion is created in the repository, and when triggered manually via `workflow_dispatch`.
+
+```yaml
+name: Blog Webhook Exec
+
+on:
+  workflow_dispatch:
+  discussion:
+    types:
+      - created
+```
+
+If the new discussion belongs to the **Newsletter** category, it sends a notification to a Discord channel via webhook:
+
+```yaml
+jobs:
+  blog-webhook-exec:
+    if: ${{ github.event.discussion.category.name == 'Newsletter' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl \
+            -H "Content-Type: application/json" \
+            -d '{"content": "# New blog post created!\n**Title:** ${{ github.event.discussion.title }}\n**Link:** https://acmcsuf.com/blog/${{ github.event.discussion.number }}"}' \
+            ${{ secrets.DISCORD_BLOG_WEBHOOK_URL }}
+```
+
+The webhook URL is stored as a repository secret (`DISCORD_BLOG_WEBHOOK_URL`). The message body includes the discussion title and a direct link to the post on acmcsuf.com.
+
+---
+
+### Dependency Updates (`update_deps.yaml`)
+
+This workflow runs on a monthly schedule (first day of each month at midnight UTC) to keep dependencies current.
+
+```yaml
+name: Update Dependencies
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+```
+
+It uses `npm-check-updates` to upgrade all dependencies to their latest versions and then opens a pull request:
+
+```yaml
+jobs:
+  update-dep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - name: Update dependencies
+        run: |
+          npx -p npm-check-updates ncu -u
+          npm install
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: Update dependencies
+          title: Update dependencies
+          body: |
+            - Dependency updates
+          branch: update-dependencies
+          author: github-actions <noreply@github.com>
+```
+
+The resulting PR is created on the `update-dependencies` branch and goes through the normal review process before merging.
+
+## Deployment Flow
+
+Actual deployment to Cloudflare Workers is handled by Cloudflare's native GitHub integration rather than a GitHub Actions workflow. Once all checks in `check_website.yaml` pass on the `main` branch, Cloudflare automatically promotes the preview to production.
+
+See the [Cloudflare Workers](/deployment/cloudflare-workers) page for full details on the deployment process.

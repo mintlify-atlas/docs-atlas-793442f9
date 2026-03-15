@@ -1,0 +1,106 @@
+---
+title: "Hackathons"
+description: "A history of TuffyHacks and FullyHacks — annual hackathons hosted by ACM at CSUF."
+---
+
+The Hackathons page at `acmcsuf.com/hackathons` showcases the annual hackathons organized by ACM at CSUF. The page is a timeline of every event in the series, grouped by year with alternating section backgrounds.
+
+## The hackathon series
+
+ACM at CSUF has hosted a hackathon every year since 2021. The series began as **TuffyHacks** and was rebranded to **FullyHacks** in 2023.
+
+<AccordionGroup>
+  <Accordion title="TuffyHacks 2021 — March 2021">
+    **Location:** Virtual\
+    **Theme:** Camping
+
+    The first CSUF hackathon in decades, reignited by Jacob Nguyen and Samuel Sandoval. Held virtually due to the global pandemic. Ethan Davidson led as Head of Technology.
+
+    **Directors:** Jacob Nguyen, Samuel Sandoval, Ethan Davidson
+  </Accordion>
+  <Accordion title="TuffyHacks 2022 — February 2022">
+    **Location:** Virtual\
+    **Theme:** Cyberpunk
+
+    Following a successful first event, Jacob and Sam hosted TuffyHacks 2022 with Ethan continuing as Head of Technology.
+
+    **Directors:** Jacob Nguyen, Samuel Sandoval, Ethan Davidson
+  </Accordion>
+  <Accordion title="FullyHacks 2023 — April 2023">
+    **Location:** California State University, Fullerton\
+    **Theme:** Party
+
+    Leadership transitioned to Daniel "Anh Duy" Truong. The event was rebranded as "FullyHacks" and became the first in-person hackathon in the series.
+
+    **Directors:** Daniel Truong
+  </Accordion>
+  <Accordion title="FullyHacks 2024 — February 2024">
+    **Location:** California State University, Fullerton\
+    **Theme:** Neon
+
+    Opened to all college students. Garnered interest from over 400+ students and achieved 200+ attendees over two days.
+
+    **Directors:** Daniel Truong, David Solano
+  </Accordion>
+  <Accordion title="FullyHacks 2025 — April 2025">
+    **Location:** California State University, Fullerton\
+    **Theme:** Space
+
+    Attracted over 450 students and set new records: 234 hackers, 12 judges, 69 project submissions, and a retention rate exceeding 80%.
+
+    **Directors:** Eric Ly, Esteban Escartin, Joel Daniel Rico, Sama Ahmed
+  </Accordion>
+</AccordionGroup>
+
+## How to use the page
+
+<Steps>
+  <Step title="Navigate to the hackathons page">
+    Go to `acmcsuf.com/hackathons`.
+  </Step>
+  <Step title="Jump to a year">
+    Use the year navigation pills at the top of the page to scroll directly to a specific year's section.
+  </Step>
+  <Step title="Browse hackathon cards">
+    Each card displays the hackathon name, date, location, theme, a photo, description, and the event directors.
+  </Step>
+</Steps>
+
+## Adding a new hackathon (contributors)
+
+Hackathon data is stored as a static array in `src/routes/(site)/hackathons/data.ts`. Each entry satisfies the `Hackathon` type from `$lib/public/hackathons`.
+
+```typescript
+{
+  id: 'fullyhacks2025',
+  title: 'FullyHacks 2025',
+  date: 'April 2025',
+  location: 'California State University, Fullerton',
+  theme: 'Space',
+  description: 'Continuing the momentum, FullyHacks 2025 attracted over 450 students...',
+  directors: [
+    { name: 'Eric Ly', picture: '/people/eric-ly.webp' },
+    { name: 'Esteban Escartin', picture: '/people/esteban-escartin.webp' },
+    { name: 'Joel Daniel Rico', picture: '/people/joel-daniel-rico.webp' },
+    { name: 'Sama Ahmed', picture: '/people/sama-ahmed.webp' },
+  ],
+}
+```
+
+To add a new hackathon:
+
+<Steps>
+  <Step title="Add a data entry">
+    Append a new object to the array in `src/routes/(site)/hackathons/data.ts`. Use a unique `id` following the pattern `fullyhacksYYYY`.
+  </Step>
+  <Step title="Add a hackathon image">
+    Place the hackathon website screenshot at `static/assets/hackathon-{id}.webp` (e.g., `hackathon-fullyhacks2025.webp`). The image is automatically referenced by the `id` field.
+  </Step>
+  <Step title="Add director photos">
+    Place each director's headshot at `static/people/{name}.webp` (e.g., `eric-ly.webp`) and reference it in the `directors` array.
+  </Step>
+</Steps>
+
+## Page behavior
+
+The page sorts hackathons by year (newest first) and groups them into year sections with alternating background colors. Each year section can hold multiple hackathons displayed in a two-column grid (single column on mobile).

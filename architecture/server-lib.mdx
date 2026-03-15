@@ -1,0 +1,214 @@
+---
+title: "Server library"
+description: "Server-only modules in src/lib/server/ — data fetching, caching, environment variables, and how they integrate with SvelteKit load functions."
+---
+
+The `src/lib/server/` directory contains code that runs **exclusively on the server** (Cloudflare Workers). Modules here may import secret environment variables and call external APIs. SvelteKit enforces this boundary at build time — any client-side import of a server module is a build error.
+
+## Integration with load functions
+
+Server lib modules are called from `+page.ts` (universal) or `+page.server.ts` (server-only) load functions. Because acmcsuf.com exposes its data via JSON endpoints, the typical pattern is:
+
+1. A `+server.ts` file in a route calls a server lib function and returns a `Response`.
+2. The corresponding `+page.ts` `load` function calls that endpoint with `fetch`.
+
+```typescript src/routes/(site)/events/+page.ts
+export async function load({ fetch }: PageLoadEvent) {
+  const response = await fetch(`/events/all.json`);
+  const events: ClubEvent[] = await response.json();
+  return { events };
+}
+```
+
+This keeps data fetching logic in server lib and page components focused on rendering.
+
+## Subdirectories
+
+### `blog/`
+
+**Files:** `data.json`, `data.ts`, `gql.ts`, `posts.ts`
+
+Fetches blog posts from the GitHub Discussions GraphQL API. `posts.ts` is the main entry point — it exports `fetchBlogPosts()`, which:
+
+- Returns cached posts if the in-memory cache is still valid.
+- Fetches fresh posts from `https://api.github.com/graphql` using `GH_ACCESS_TOKEN` and `GH_DISCUSSION_CATEGORY_ID`.
+- Falls back to `SAMPLE_BLOG_POSTS` (from `data.ts`) in debug mode.
+- Maps each GitHub Discussion node to a `BlogPost` type, including author details resolved via `getOfficerByGhUsername()`.
+
+```typescript src/lib/server/blog/posts.ts
+// Make this false to disable server-side caching in development.
+const cache = Cache.create<BlogPost[]>(/* CACHING=*/ true);
+```
+
+### `cache/`
+
+**Files:** `cache.ts`
+
+A simple in-memory time-based cache shared by blog, events, and other server modules.
+
+```typescript src/lib/server/cache/cache.ts
+const EXPIRATION_TIMEOUT = 1e3 * 60 * 1; // Cache updates every 1 minute.
+
+export class Cache<T> implements CacheInterface<T> {
+  get() {
+    if (Date.now() > this.lastUpdated + this.expirationTimeout) {
+      return; // expired
+    }
+    return this.data;
+  }
+}
+```
+
+`Cache.create<T>(caching)` returns a real `Cache` when `caching` is `true`, or a `NoopCache` (always returns `undefined`) when `false`. Set `caching` to `false` during development to always fetch fresh data.
+
+<Info>
+  The cache lives in Cloudflare Worker memory. It resets whenever a new Worker instance starts (e.g. after a deploy or after the Worker goes idle).
+</Info>
+
+### `certificates/`
+
+**Files:** `cache.ts`, `certificates.ts`, `gql.ts`, `gql.test.ts`, `index.ts`
+
+Builds contributor certificates for the `/@username` routes. Exports two functions:
+
+| Function | Purpose |
+| --- | --- |
+| `getReleaseCertificatePageData(q)` | Fetches all merged PRs by a GitHub user between two release tags. |
+| `getRepositoryCertificatePageData(q)` | Fetches all merged PRs and issues by a user across a repository's full history. |
+
+Both use `doQuery()` from `gql/` to run GitHub GraphQL queries and resolve officer details via `getOfficerByGhUsername()` from `$lib/public/board`.
+
+### `env/`
+
+**Files:** `index.ts`, `required.ts`, `optional.ts`
+
+The single place where environment variables are imported from SvelteKit's `$env/static/private`. All other server modules import from `$lib/server/env` rather than from `$env` directly.
+
+**Required variables** (a warning is logged at startup if any are missing):
+
+| Variable | Used by |
+| --- | --- |
+| `GH_ACCESS_TOKEN` | Blog posts, certificates — GitHub GraphQL API authentication. |
+| `GH_DISCUSSION_CATEGORY_ID` | Blog posts — identifies the GitHub Discussions category to fetch. |
+| `GCAL_API_KEY` | Events — Google Calendar API key. |
+| `GCAL_ID` | Events — Google Calendar ID. |
+| `GDRIVE_GALLERY_API_KEY` | Gallery — Google Drive API key. |
+| `GDRIVE_GALLERY_FOLDER_ID` | Gallery — Google Drive folder containing gallery images. |
+
+**Optional variables:**
+
+| Variable | Used by |
+| --- | --- |
+| `DEBUG_FLAG_ENABLED` | Flags — enables debug mode (uses sample data, bypasses caching). |
+
+```typescript src/lib/server/env/index.ts
+export * from './optional';
+export * from './required';
+
+import * as required from './required';
+
+Object.entries(required).forEach(([key, value]) => {
+  if (value === undefined) {
+    console.warn('Missing required environment variable:', key);
+  }
+});
+```
+
+<Warning>
+  Never import from `$env/static/private` outside of `src/lib/server/env/`. Centralising variable access here makes it easy to audit which secrets the application uses.
+</Warning>
+
+### `events/`
+
+**Files:** `cache.ts`, `event.ts`, `event.test.ts`, `gcal.ts`, `gcal.test.ts`, `data/`
+
+Fetches upcoming club events from the Google Calendar API. `gcal.ts` exports:
+
+- `listUpcomingEvents()` — calls the Google Calendar v3 API, returning up to 100 upcoming events ordered by start time.
+- `fromGCal(events)` — maps raw `GCalEvent` objects to the shared `ClubEvent` type using the `America/Los_Angeles` timezone via the `temporal-polyfill` library.
+
+Event data is cached via a `Cache<ClubEvent[]>` instance in `cache.ts`.
+
+### `flags/`
+
+**Files:** `index.ts`
+
+Exports a single boolean flag, `DEBUG_FLAG_ENABLED`, derived from the `DEBUG_FLAG_ENABLED` environment variable via `parseBool()`.
+
+```typescript src/lib/server/flags/index.ts
+import { parseBool } from '$lib/server/parse-bool/parse-bool';
+import * as env from '$lib/server/env';
+
+export const DEBUG_FLAG_ENABLED = parseBool(env.DEBUG_FLAG_ENABLED);
+```
+
+When `DEBUG_FLAG_ENABLED` is `true`, the blog module skips the cache and returns sample data instead of calling the GitHub API.
+
+### `gallery/`
+
+**Files:** `drive.ts`, `gallery.ts`, `index.ts`
+
+Fetches photo gallery images from Google Drive. `gallery.ts` exports `getGallery()`, which:
+
+1. Authenticates with the Google Drive API using `GDRIVE_GALLERY_API_KEY`.
+2. Lists files in the folder identified by `GDRIVE_GALLERY_FOLDER_ID`.
+3. Filters to image MIME types and maps each file to a `GalleryItem`.
+
+### `gql/`
+
+**Files:** `github.ts`
+
+A thin wrapper around the GitHub GraphQL API endpoint. Exports `doQuery<T>(query)` which authenticates with `GH_ACCESS_TOKEN` and returns the `data` field of the response.
+
+```typescript src/lib/server/gql/github.ts
+const GRAPHQL_URL = 'https://api.github.com/graphql';
+
+export async function doQuery<T>(query: string): Promise<T> {
+  const r = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: { Authorization: `token ${GH_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  return (await r.json())['data'] as T;
+}
+```
+
+### `links/`
+
+**Files:** `shortener.ts`, `resolve.ts`, `resolve.test.ts`, `qr.ts`, `types.ts`
+
+Powers the URL shortener that runs as a server hook. `shortener.ts` exports `shortener()`, a SvelteKit `Handle` factory used in `hooks.server.ts`. On each request it:
+
+1. Skips `.svg` paths (those go to the QR code endpoint).
+2. Calls `resolve()` with the request URL and the `LINKS` table from `$lib/public/links`.
+3. Issues a 302 redirect if a matching short link is found.
+
+`qr.ts` generates QR code SVGs for short links, served by the `[...id=link].svg` endpoint.
+
+### `parse-bool/`
+
+**Files:** `parse-bool.ts`, `parse-bool.test.ts`
+
+A utility for converting string environment variable values to booleans. `parseBool()` checks whether the string matches a known falsy representation (`'0'`, `'false'`, `'null'`, `'undefined'`, etc.) and returns `false` for those, `true` otherwise.
+
+```typescript src/lib/server/parse-bool/parse-bool.ts
+export function parseBool(payload?: string | null): boolean {
+  const isFalsy = !payload || FALSY_PATTERN.test(payload);
+  return !isFalsy;
+}
+```
+
+## Caching strategy
+
+The project uses a simple in-memory cache with a 1-minute TTL rather than an external cache store.
+
+| Module | Cache instance | Default TTL |
+| --- | --- | --- |
+| `blog/posts.ts` | `Cache<BlogPost[]>` | 1 minute |
+| `events/cache.ts` | `Cache<ClubEvent[]>` | 1 minute |
+
+`Cache.create<T>(caching)` makes it easy to disable caching for a specific module during development without changing the calling code.
+
+<Note>
+  Because Cloudflare Workers can run as many parallel instances as needed, each instance has its own in-memory cache. A cache hit in one instance does not guarantee a cache hit in another. For most club-scale traffic this is acceptable.
+</Note>

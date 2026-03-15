@@ -1,0 +1,125 @@
+---
+title: "Pull requests"
+description: "How to fork, branch, and submit a pull request to acmcsuf.com."
+---
+
+## Fork and branch workflow
+
+<Warning>
+  Never work directly on the `main` branch. Always create a new branch for your changes.
+</Warning>
+
+<Steps>
+  <Step title="Fork the repository">
+    Create a fork of [acmcsuf.com](https://github.com/acmcsufoss/acmcsuf.com) on GitHub. Your fork is where you'll push your changes. See [github.com/diamondburned/acmcsuf.com](https://github.com/diamondburned/acmcsuf.com) as an example of a fork.
+  </Step>
+  <Step title="Clone your fork">
+    Clone your **forked** repository locally — not the upstream repository.
+
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/acmcsuf.com.git
+    ```
+  </Step>
+  <Step title="Create a new branch">
+    Create a branch for your change before writing any code.
+
+    ```bash
+    git checkout -b my-feature-branch
+    ```
+  </Step>
+  <Step title="Make your changes">
+    Write your code. When applicable, write unit tests for any new functions or components you create.
+  </Step>
+  <Step title="Run all checks">
+    Before committing, run `npm run all`. This is required. See [Running checks](#running-checks) below.
+  </Step>
+  <Step title="Commit and push">
+    ```bash
+    git add .
+    git commit -m "Brief description of your change"
+    git push origin my-feature-branch
+    ```
+  </Step>
+  <Step title="Open a pull request">
+    Go to the [main repository](https://acmcsuf.com/code) and click **Pull Requests → New pull request**.
+  </Step>
+</Steps>
+
+## Running checks
+
+You **must** run `npm run all` before submitting a PR. This command runs linting, formatting, type checking, the build, and all unit tests. If this command fails, the automated CI check will also fail.
+
+```bash
+# Run all checks required for a release build
+npm run all
+```
+
+You can also run individual checks:
+
+```bash
+# Auto-format source files (may modify files)
+npm run format
+
+# Run the linter (may modify files)
+npm run lint
+
+# Check for type errors, unused CSS, and more
+npm run check
+
+# Run unit tests
+npm t
+
+# Build the website
+npm run build
+
+# Run all checks and host the production build locally
+npm run host
+
+# Run tests and generate a coverage report
+npm run test:coverage
+```
+
+<Note>
+  `npm run format` and `npm run lint` may modify your files. Review the changes they make before committing.
+</Note>
+
+## PR requirements
+
+Your pull request must include:
+
+1. **A clear and descriptive title.** Do not use titles like `Fixed #123`.
+2. **A detailed description** explaining what you changed and why.
+3. **A link to the related issue** (if applicable).
+4. **Screenshots** if your change affects anything visible on the website, or if screenshots would help the reviewer understand your changes.
+
+### Examples of good PRs
+
+- [acmcsuf.com/pull/477](https://github.com/acmcsufoss/acmcsuf.com/pull/477)
+- [acmcsuf.com/pull/469](https://github.com/acmcsufoss/acmcsuf.com/pull/469)
+- [acmcsuf.com/pull/401](https://github.com/acmcsufoss/acmcsuf.com/pull/401)
+
+### Examples of PRs to avoid
+
+- [acmcsuf.com/pull/359](https://github.com/acmcsufoss/acmcsuf.com/pull/359)
+- [acmcsuf.com/pull/357](https://github.com/acmcsufoss/acmcsuf.com/pull/357)
+
+## Review process
+
+<Steps>
+  <Step title="Request a reviewer">
+    Use the **Reviewers** panel on the top-right of the PR page to request a review. Reach out to your chosen reviewer outside of GitHub to make sure they are aware of the request.
+  </Step>
+  <Step title="Respond to feedback">
+    Address reviewer comments by pushing additional commits to your branch. As a requester, give reviewers a heads-up before formally requesting a review. As a reviewer, respond within 24 hours.
+  </Step>
+  <Step title="Follow up if needed">
+    If your reviewer does not respond within 24 hours, send a gentle reminder. If necessary, you can request a review from a different person.
+  </Step>
+  <Step title="Merge">
+    Once your PR is approved, you have permission to merge. Always merge using **Squash and merge** — do not use a regular merge commit.
+  </Step>
+</Steps>
+
+<Warning>
+  Merge using **Squash and merge** only. Do not use a standard merge commit.
+</Warning>

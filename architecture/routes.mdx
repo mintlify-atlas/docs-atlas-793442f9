@@ -1,0 +1,115 @@
+---
+title: "Routes"
+description: "How SvelteKit file-system routing is used in acmcsuf.com, including route groups, special files, dynamic segments, and every major page URL."
+---
+
+acmcsuf.com uses SvelteKit's file-system router. Every file prefixed with `+` under `src/routes/` corresponds to an endpoint or layout. All public pages live inside the `(site)` route group at `src/routes/(site)/`.
+
+<Tip>
+  For a full explanation of SvelteKit routing conventions, see the [SvelteKit routing docs](https://kit.svelte.dev/docs/routing).
+</Tip>
+
+## Route group: `(site)`
+
+The `(site)` folder is a [route group](https://kit.svelte.dev/docs/routing#advanced-routing-route-groups). The parentheses mean it is **not** part of the URL — it exists purely to scope the shared layout (`+layout.svelte`) to all site pages without adding a path segment.
+
+The shared layout at `src/routes/(site)/+layout.svelte` renders on every page and mounts the navigation bar, footer, and toast notification system:
+
+```svelte src/routes/(site)/+layout.svelte
+<Navbar />
+<main><slot /></main>
+<Footer />
+<AcmToaster />
+```
+
+It also initialises the light/dark theme on mount and pre-loads the `/events` page data to improve perceived performance.
+
+## Special files
+
+| File | Purpose |
+| --- | --- |
+| `+page.svelte` | The page component. Receives data returned by `+page.ts`. |
+| `+page.ts` | Universal load function — runs on the server during SSR and in the browser on navigation. Fetches data and returns it as props. |
+| `+layout.svelte` | Wraps all pages in the same directory (and subdirectories) with shared UI. |
+| `+error.svelte` | Rendered when any page throws an error. Replaces the failing page to show the user a friendly message. |
+| `+server.ts` | An API endpoint (no UI). Returns a `Response` directly. |
+
+## Page routes
+
+Every row below maps a source file to a production URL on `https://acmcsuf.com`.
+
+| Source path | URL | Notes |
+| --- | --- | --- |
+| `(site)/+page.svelte` | `/` | Homepage — hero, description, teams, FAQ, and lucky sections. |
+| `(site)/blog/+page.svelte` | `/blog` | Blog post listing with label filtering. |
+| `(site)/blog/[id]/` | `/blog/:id` | Single blog post. |
+| `(site)/blog/[id].txt/` | `/blog/:id.txt` | Plain-text version of a blog post. |
+| `(site)/blog/[query].json/` | `/blog/:query.json` | JSON data endpoint used by the blog load function. |
+| `(site)/events/+page.svelte` | `/events` | Upcoming club events fetched from Google Calendar. |
+| `(site)/events/[query].json/` | `/events/:query.json` | JSON data endpoint for events. |
+| `(site)/teams/+page.svelte` | `/teams` | Board member directory. |
+| `(site)/workshops/+page.svelte` | `/workshops` | Workshop listing. |
+| `(site)/workshops/[team]/` | `/workshops/:team` | Workshops filtered by team. |
+| `(site)/hackathons/+page.svelte` | `/hackathons` | Hackathon information page. |
+| `(site)/gallery/+page.svelte` | `/gallery` | Photo gallery backed by Google Drive. |
+| `(site)/lc-dailies/+page.svelte` | `/lc-dailies` | LeetCode Dailies leaderboard. |
+| `(site)/lc-dailies/[season_id]/` | `/lc-dailies/:season_id` | Per-season leaderboard. |
+| `(site)/branding/` | `/branding` | Brand asset downloads. |
+| `(site)/colors/` | `/colors` | ACM colour palette reference. |
+| `(site)/design-gallery/` | `/design-gallery` | Design showcase. |
+| `(site)/boardify/+page.svelte` | `/boardify` | Board member headshot cropping tool. |
+| `(site)/portfolios/` | `/portfolios` | Member portfolio links. |
+| `(site)/privacy/` | `/privacy` | Privacy policy. |
+| `(site)/quiz/` | `/quiz` | Interactive quiz. |
+| `(site)/random/` | `/random` | Redirects to a random page. |
+| `(site)/sitemap/+page.svelte` | `/sitemap` | Human-readable site map. |
+| `(site)/shorter/+page.svelte` | `/shorter` | UI for the URL shortener. |
+| `(site)/feed.xml/` | `/feed.xml` | RSS/Atom feed. |
+| `(site)/genuary/` | `/genuary` | Genuary art challenge page. |
+| `(site)/1st/` | `/1st` | First-year student resources. |
+| `(site)/ready-up.svelte` | — | Internal partial component (not a route). |
+| `(site)/temp-apps/` | `/temp-apps` | Temporary application pages. |
+
+## Dynamic routes
+
+### `[x+40][username]` — contributor certificates
+
+Path: `src/routes/(site)/[x+40][username]/`
+
+The segment `[x+40]` is a SvelteKit [character encoding escape](https://kit.svelte.dev/docs/routing#advanced-routing-encoding) for the `@` symbol (Unicode code point U+0040). The full segment matches URLs of the form `/@username`.
+
+| Sub-route | URL | Purpose |
+| --- | --- | --- |
+| `+page.svelte` | `/@:username` | Contributor certificate landing page. |
+| `[repo_name]/` | `/@:username/:repo_name` | Repository-specific certificate. |
+| `[repo_name].json/` | `/@:username/:repo_name.json` | JSON data endpoint for certificate data. |
+
+### `[...id=link].svg` — QR code generation
+
+Path: `src/routes/(site)/[...id=link].svg/+server.ts`
+
+The rest parameter `[...id]` captures any path, the `=link` part applies a [parameter matcher](https://kit.svelte.dev/docs/routing#advanced-routing-matching), and the `.svg` suffix routes requests to this server endpoint. It generates QR code SVGs for short links.
+
+The URL shortener hook in `src/hooks.server.ts` explicitly passes `.svg`-suffixed URLs through to this endpoint rather than attempting to redirect them:
+
+```typescript src/lib/server/links/shortener.ts
+// Pass to QR code generation endpoint.
+if (url.pathname.toLowerCase().endsWith('.svg')) {
+  return resolve(event);
+}
+```
+
+## Server hooks
+
+`src/hooks.server.ts` runs before any route handler and sequences two behaviours:
+
+```typescript src/hooks.server.ts
+export const handle = sequence(shortener(), handleTheme);
+```
+
+1. **`shortener()`** — resolves short links from `$lib/public/links` and issues a 302 redirect to the destination URL.
+2. **`handleTheme`** — reads the `theme` cookie and rewrites `data-theme=""` in the page HTML to apply the user's saved light/dark preference.
+
+<Note>
+  Load functions in `+page.ts` files are *universal* — they run on the server for the initial request and in the browser for client-side navigations. To run code exclusively on the server, use `+page.server.ts` or place logic in `src/lib/server/`.
+</Note>

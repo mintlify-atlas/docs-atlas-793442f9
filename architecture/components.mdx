@@ -1,0 +1,151 @@
+---
+title: "Components"
+description: "The reusable Svelte component library in src/lib/components/ and the shared public logic in src/lib/public/."
+---
+
+Reusable UI building blocks live under `src/lib/components/`. Each subdirectory groups related files — a Svelte component, optional TypeScript helpers, and any co-located styles. Components are imported using the `$lib` path alias.
+
+```svelte example import
+<script lang="ts">
+  import Navbar from '$lib/components/nav/bar.svelte';
+  import Footer from '$lib/components/footer/footer.svelte';
+  import AcmToaster from '$lib/components/toaster/toaster.svelte';
+</script>
+```
+
+## Component directories
+
+<AccordionGroup>
+  <Accordion title="block">
+    **Files:** `block.svelte`
+
+    A centered section container used to lay out headline + body-text pairs on content pages. Accepts an `align` prop (`TextAlignment.CENTER` by default) and two named slots — `headline` and `text`.
+  </Accordion>
+
+  <Accordion title="blog">
+    **Files:** `blog-post-preview.svelte`, `labels.svelte`
+
+    Components for the blog listing page. `blog-post-preview.svelte` renders a single post card with title, author, date, and labels. `labels.svelte` renders the filterable label chips.
+  </Accordion>
+
+  <Accordion title="board-member">
+    **Files:** `board-member.svelte`, `board-picture.svelte`, `team-picker.svelte`
+
+    Renders individual board member cards. `board-picture.svelte` displays the member's headshot with a team-colour border. `team-picker.svelte` provides a UI control for selecting which team to view on the `/teams` page.
+  </Accordion>
+
+  <Accordion title="button">
+    **Files:** `button.svelte`
+
+    A styled `<button>` wrapper. Accepts a `text` prop and forwards click events, used across several pages including the `cropper` tool.
+  </Accordion>
+
+  <Accordion title="bw-icon">
+    **Files:** `bw-icon.svelte`
+
+    Renders an icon image that switches between black and white based on the current theme. Accepts `src` and `alt` props.
+  </Accordion>
+
+  <Accordion title="cropper">
+    **Files:** `cropper.svelte`, `cropper.ts`, `debounce.ts`, `discord-uploader.ts`
+
+    An image cropping tool used on the `/boardify` page to let board members prepare their headshot. Loads [Cropper.js](https://fengyuanchen.github.io/cropperjs/) from a CDN, previews the result as a `BoardMember` card, converts the output to WebP, and uploads it via `discord-uploader.ts`.
+  </Accordion>
+
+  <Accordion title="faq">
+    **Files:** `faq.svelte`
+
+    Renders the FAQ section on the homepage.
+  </Accordion>
+
+  <Accordion title="footer">
+    **Files:** `footer.svelte`
+
+    The site-wide page footer. Included in `src/routes/(site)/+layout.svelte` so it appears on every page.
+  </Accordion>
+
+  <Accordion title="nav">
+    **Files:** `bar.svelte`
+
+    The top navigation bar. Included in `src/routes/(site)/+layout.svelte` so it appears on every page.
+  </Accordion>
+
+  <Accordion title="recursive-ul">
+    **Files:** `recursive-ul.svelte`, `types.ts`, `utils.ts`
+
+    Renders arbitrarily-nested unordered lists from a tree data structure. Used for hierarchical content such as the sitemap or outline views.
+  </Accordion>
+
+  <Accordion title="scroll-to-top">
+    **Files:** `scroll.svelte`
+
+    A floating button that scrolls the page back to the top. Included on the homepage (`+page.svelte`).
+  </Accordion>
+
+  <Accordion title="select">
+    **Files:** `select.svelte`
+
+    A styled `<select>` dropdown wrapper.
+  </Accordion>
+
+  <Accordion title="toaster">
+    **Files:** `toaster.svelte`, `toasts.ts`
+
+    A toast notification system. `toasts.ts` exposes a `toast()` function and a `toasts` Svelte writable store. Toasts auto-dismiss after 2 seconds, are capped at 4 visible at once, and support `success` and `error` types. `toaster.svelte` subscribes to the store and renders the visible toasts.
+
+    ```typescript usage
+    import { toast, ToastType } from '$lib/components/toaster/toasts';
+
+    await toast('Copied WEBP link to clipboard!');
+    await toast({ content: 'Something went wrong', type: ToastType.Error });
+    ```
+  </Accordion>
+
+  <Accordion title="toggle">
+    **Files:** `toggle.svelte`
+
+    A toggle switch UI component.
+  </Accordion>
+
+  <Accordion title="workshop">
+    **Files:** `wsdisplay.svelte`, `wstable.svelte`, `table.ts`, `wscommon.ts`
+
+    Components and utilities for rendering workshop information. `wstable.svelte` displays a table of workshops; `wsdisplay.svelte` handles the display view for a single workshop entry. Shared types and helpers live in `table.ts` and `wscommon.ts`.
+  </Accordion>
+</AccordionGroup>
+
+## SVG components
+
+`src/lib/components/` previously included an `svg/` subdirectory containing inline SVG data as Svelte components, as documented in `ARCHITECTURE.md`. Inline SVG components can be used in multiple places across the site without duplicating markup.
+
+<Tip>
+  Prefer inline SVG components over `<img>` tags for icons that need to respond to the current theme colour, since CSS `currentColor` works on inline SVG paths.
+</Tip>
+
+## `src/lib/public/` — shared client-safe logic
+
+The `src/lib/public/` directory contains logic that is **safe to run on both client and server** — types, utility functions, Svelte stores, and data that does not depend on secret environment variables.
+
+| Subdirectory | Contents |
+| --- | --- |
+| `blog/` | Blog post types, URL helpers, label utilities. |
+| `board/` | Board member data and lookup helpers (e.g. `getOfficerByGhUsername`). |
+| `branding/` | Brand asset references. |
+| `certificates/` | Certificate types shared between client and server. |
+| `confetti/` | Confetti animation logic. |
+| `copy/` | `copy()` utility — writes text to the clipboard and fires a toast notification. |
+| `design-gallery/` | Design gallery data types. |
+| `events/` | `ClubEvent` type and event utilities consumed by both the events page and the Google Calendar server module. |
+| `faq/` | FAQ data. |
+| `gallery/` | `Gallery` and `GalleryItem` types used by the gallery server module. |
+| `hackathons/` | Hackathon data. |
+| `lc-dailies/` | LeetCode Dailies types and utilities. |
+| `legacy/` | Legacy utilities including the `theme` store and `spacing.svelte` component. |
+| `links/` | `LINKS` constant — the canonical short-link table consumed by the URL shortener. |
+| `quiz/` | Quiz data and types. |
+| `sitemap/` | Sitemap data. |
+| `text-alignment/` | `TextAlignment` enum used by the `block` component. |
+
+<Note>
+  Do not import from `$lib/server/` in any file under `$lib/public/` or in a `+page.svelte`/`+page.ts`. Server modules access secret environment variables and must never be exposed to the client bundle.
+</Note>
